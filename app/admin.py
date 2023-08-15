@@ -13,10 +13,34 @@ def status():
 def view_users():
     pass
 
+@admin.route('/users/<userID>',methods=['GET'])
+@login_required
+def view_user_details(userID):
+    pass
+
 @admin.route('/users/<userID>',methods=['GET','POST'])
 @login_required
-def user_details(userID):
+def edit_user_details(userID):
+    """_summary_
+    This includes the functionality to change the user from a 
+    regular user to an admin
+    Args:
+        userID (_type_): _description_
+    """
     pass
+
+@admin.route('/users/<userID>',methods=['DELETE'])
+@login_required
+def delete_user(userID):
+    """_summary_
+        This could be nested in the edit view
+        This to ensure that it is difficult to remove a user by accident
+    Args:
+        userID (_type_): _description_
+    """
+    pass
+
+
 
 @admin.route('/product/',methods=['GET','POST'])
 @login_required
@@ -33,4 +57,19 @@ def updateProductDetails(product):
 @admin.route('/product/<productID>',method = ['DELETE'])
 @login_required
 def deleteProduct(productID):
+    pass
+
+@admin.route('/orders/',method = ['GET'])
+@login_required
+def viewOrders():
+    pass
+
+@admin.route('/orders/<orderID>',method = ['GET'])
+@login_required
+def order_details(orderID):
+    pass
+
+@admin.route('/orders/<orderID>',method = ['GET','POST'])
+@login_required
+def edit_order(orderID):
     pass
