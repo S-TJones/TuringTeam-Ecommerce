@@ -1,7 +1,6 @@
-from datetime import datetime, date
-from itertools import product
-from . import db
 import enum
+from datetime import datetime
+from app.extensions import db
 from werkzeug.security import generate_password_hash
 
 # User Class
@@ -30,7 +29,6 @@ class Users(db.Model):
         self.role = role
         self.created_at = created_at
         self.updated_at = updated_at
-
 
     def is_authenticated(self):
         return True
