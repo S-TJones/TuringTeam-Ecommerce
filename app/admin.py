@@ -8,17 +8,17 @@ admin = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
 def status():
     return jsonify({ "message": "API Operational for admin" })
 
-@admin.route('/users',method=['GET'])
+@admin.route('/users', methods=['GET'])
 @login_required
 def view_users():
     pass
 
-@admin.route('/users/<userID>',methods=['GET'])
+@admin.route('/users/<userID>', methods=['GET'])
 @login_required
 def view_user_details(userID):
     pass
 
-@admin.route('/users/<userID>',methods=['GET','POST'])
+@admin.route('/users/<userID>', methods=['GET','POST'])
 @login_required
 def edit_user_details(userID):
     """_summary_
@@ -29,7 +29,7 @@ def edit_user_details(userID):
     """
     pass
 
-@admin.route('/users/<userID>',methods=['DELETE'])
+@admin.route('/users/<userID>', methods=['DELETE'])
 @login_required
 def delete_user(userID):
     """_summary_
@@ -42,34 +42,34 @@ def delete_user(userID):
 
 
 
-@admin.route('/product/',methods=['GET','POST'])
+@admin.route('/product/', methods=['GET','POST'])
 @login_required
 def createProduct():
     pass
 
 
-@admin.route('/product/<productID>',methods=['GET','POST'])
+@admin.route('/product/<productID>', methods=['GET','POST'])
 @login_required
 def updateProductDetails(product):
     pass
 
 
-@admin.route('/product/<productID>',method = ['DELETE'])
+@admin.route('/product/<productID>', methods=['DELETE'])
 @login_required
 def deleteProduct(productID):
     pass
 
-@admin.route('/orders/',method = ['GET'])
+@admin.route('/orders/', methods=['GET'])
 @login_required
 def viewOrders():
     pass
 
-@admin.route('/orders/<orderID>',method = ['GET'])
+@admin.route('/orders/<orderID>', methods=['GET'])
 @login_required
 def order_details(orderID):
     pass
 
-@admin.route('/orders/<orderID>',method = ['GET','POST'])
+@admin.route('/orders/<orderID>', methods=['GET','POST'])
 @login_required
 def edit_order(orderID):
     pass
