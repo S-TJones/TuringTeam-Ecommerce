@@ -34,3 +34,8 @@ def view_cart():
 @customer.route('/remove-from-cart', methods=['POST'])
 def remove_from_cart():
     pass
+
+@customer.route('/check-out',methods=['GET','POST'])
+@login_required
+def checkout():
+    pass

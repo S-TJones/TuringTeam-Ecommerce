@@ -13,6 +13,12 @@ class RegistrationForm(FlaskForm):
 
 #----------------------------------------------------------------------
 
+class UserUpdate(FlaskForm):
+    firstName = StringField('First Name', validators=[InputRequired()])
+    lastName = StringField('Last Name', validators=[InputRequired()])
+    email = StringField('Email', validators=[InputRequired()])
+    role = StringField('role', validators=[InputRequired()])
+
 class LoginForm(FlaskForm):
     email = StringField('email', validators=[InputRequired()])
     password = PasswordField('Password', validators=[InputRequired()])

@@ -1,21 +1,23 @@
 import enum
 from datetime import datetime
-from app.extensions import db
+from flask_login import UserMixin
+# from app.extensions import db
+from . import db
 from werkzeug.security import generate_password_hash
 
 # User Class
-class Users(db.Model):
+class Users(UserMixin,db.Model):
     # You can use this to change the table name. The default convention is to use
     # the class name. In this case a class name of UserProfile would create a
     # user_profile (singular) table, but if we specify __tablename__ we can change it
     # to `user_profiles` (plural) or some other name.
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer,unique=True)
     # Instead of full name, first and last
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))
-    email = db.Column(db.String(128), unique=True)
+    email = db.Column(db.String(128),primary_key=True)
     password = db.Column(db.String(255))
     role = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
