@@ -2,7 +2,7 @@ import os
 
 class Config:
     SECRET_KEY = 'some$3cretKey'
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:pa$$w0rd123@localhost/turingteamecommerce'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:password@localhost/turingdb'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = '../uploads'
     # SECRET_KEY = os.environ.get('SECRET_KEY')

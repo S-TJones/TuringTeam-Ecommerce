@@ -63,17 +63,19 @@ def signUp():
     """Registers Users"""
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
-        firstName  = form.firstName.data.strip().lower()
-        lastName = form.lastName.data.strip().lower()
-        email = form.email.data.strip().lower()
+        firstName  = form.firstName.data
+        lastName = form.lastName.data
+        email = form.email.data
         password = form.password.data
-        retypePassword = form.retypePassword.data
+        confirmPassword = form.confirmPassword.data
 
-        if password != retypePassword:
-            return jsonify({'result':"passwords do not match"}),400
+        if password != confirmPassword:
+            print("Pword no match")
+            return jsonify({'result':"passwords do not match"}), 400
 
         if db.session.query(Users.id).filter(Users.email==email).first() is not None:
-            return jsonify({"result": "User already has an account"}),400
+            print("User exist")
+            return jsonify({"result": "User already has an account"}), 400
         
         else:
             newUser = Users(
@@ -87,12 +89,12 @@ def signUp():
             db.session.add(newUser)
             db.session.commit()
 
-        return jsonify({"result":"Successfully Registered"}),201
-    else:        
-        error={
-                "error": form_errors(form)
-            }
-        return jsonify(error),400
+        print("User made")
+        return jsonify({"result":"Successfully Registered"}), 201
+    else:
+        print("Form error")
+        error={"error": form_errors(form)}
+        return jsonify(error), 400
     
 
 @main.route('/logout')
