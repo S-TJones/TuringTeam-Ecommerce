@@ -1,15 +1,21 @@
 import os
 from flask import Blueprint, Config, jsonify, current_app, redirect, request, session, url_for
-from flask_login import login_required,current_user
+from flask_login import LoginManager, login_required,current_user
 from app.forms import ProductForm, RegistrationForm, UpdateOrder, UserUpdate
 from app.models import LineItems, Order, ProductStatus, Users,Product
-from app.extensions import db
+from app import login_manager, app
+# from app.extensions import db
+from . import db
+
+
+
+from datetime import datetime
 from werkzeug.utils import secure_filename
 
 
 admin = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
 
-@admin.route('/status')
+@admin.route('/status',methods=['GET'])
 @login_required
 def status():
     return jsonify({ "message": "API Operational for admin" }),200
@@ -72,15 +78,27 @@ def view_or_edit_user_details(userID):
             db.session.rollback()
             return jsonify({"error":e}),500       
 
-    if user is not None:
-            result = {
-                'firstName': user.firstName,
-                'lastName' : user.lastName,
-                'email': user.email
-            }    
-            return jsonify(result),200
-    else:
-        return jsonify({"result":"User not found"}),404
+    if request.method == 'GET':
+        if user is not None:
+                result = {
+                    'firstName': user.firstName,
+                    'lastName' : user.lastName,
+                    'email': user.email
+                }  
+                #pre-populate the form
+                form = UserUpdate(data = result)
+                form_fields = []
+                for field in form:
+                    form_fields.append({
+                        'label': field.label.text,
+                        'type': field.widget.input_type,
+                        'name': field.name,
+                        'required': field.flags.required,
+                        'value': field.data  # Include the prepopulated value
+                    })
+                return jsonify(form_fields),200  
+        else:
+            return jsonify({"result":"User not found"}),404
 
 
 
@@ -120,39 +138,63 @@ def createProduct():
     form = ProductForm()
     form.status_options.choices = [(option.value,option.name) for option in ProductStatus]
     
-    if request.method =='POST' and form.validate_on_submit():
-        name = form.name.data.strip()
-        description = form.description.data.strip().lower()
-        price = form.price.data.strip().lower()
-        image = form.image.data.strip().lower()
-        status = form.status_options.data
+    if request.method =='POST':
+        if form.validate_on_submit():
+            name = form.name.data.strip()
+            description = form.description.data.strip().lower()
+            price = form.price.data.strip()
+            image = form.image.data
+            status = form.status_options.data
 
-        if image.filename == '':
-            return jsonify({'error':'file name required'}),422
+            print(name)
+
+            if image.filename == '':
+                return jsonify({'error':'file name required'}),422
+
+            imageName = secure_filename(image.filename.rstrip())
+
+            print(imageName)
+            config = Config()
+
+            # image.save(os.path.join(root_path,config['UPLOAD_FOLDER'], imageName))
+            image.save(str(os.path.join(app.config.UPLOAD_FOLDER,imageName)))
+
+            new_product = Product(
+                name,
+                description,
+                price,
+                imageName,
+                ProductStatus(str(status))
+            )
+            print("prod created")
+            try:
+                db.session.add(new_product)
+                db.session.commit()
+                return jsonify({
+                    'result':f'Successfully added Product'
+                    }),201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error":e}),500
+        else:
+            error={
+                    "error": form_errors(form)
+                }
+            return jsonify(error),400
         
-        imageName = secure_filename(image.filename.rstrip())
 
-        image.save(str(os.path.join(Config.UPLOAD_FOLDER,imageName)))
 
-        new_product = Product(
-            name,
-            description,
-            price,
-            image,
-            ProductStatus(str(status))
-        )
-
-        try:
-            db.session.add(new_product)
-            db.session.commit()
-            return jsonify({
-                'result':f'Successfully added Product'
-                }),200
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error":e}),500
+    if request.method == 'GET':
+        form_fields = []
+        for field in form:
+            form_fields.append({
+                'label': field.label.text,
+                'name': field.name,
+                'required': field.flags.required,
+            })
+        print(form_fields)
+        return jsonify(form_fields),200
         
-    return redirect(url_for('main.products'))
     
     
 
@@ -166,17 +208,34 @@ def updateProductDetails(productID):
     form = ProductForm()
 
     if request.method == "POST" and form.validate_on_submit():
-        name= form.name.data.strip().lower()
+        name= form.name.data.strip()
         description= form.description.data.strip().lower()
-        price= form.price.data.strip().lower()
+        price= form.price.data.strip()
         image= form.image.data.strip().lower()
         status_options = form.status_options.data
+        
+        if image.filename == '':
+            return jsonify({'error':'file name required'}),422
 
-        prodToEdit.name = name
-        prodToEdit.description = description
-        prodToEdit.price = price
-        prodToEdit.image = image
-        prodToEdit.status = ProductStatus(str(status_options))
+        new_image_name = secure_filename(image.filename.rstrip())
+
+        # if a different Image is present, save it to the uploads folder, else continue
+        if new_image_name == prodToEdit.image:
+            prodToEdit.name = name
+            prodToEdit.description = description
+            prodToEdit.price = price
+            prodToEdit.status = ProductStatus(str(status_options))
+            
+        else:
+            prodToEdit.name = name
+            prodToEdit.description = description
+            prodToEdit.price = price
+            prodToEdit.image = image
+            prodToEdit.status = ProductStatus(str(status_options))
+
+            image.save(str(os.path.join(Config.UPLOAD_FOLDER,new_image_name)))
+
+
 
         try:
             db.session.commit()
@@ -199,7 +258,20 @@ def updateProductDetails(productID):
                 'statusOPtions': [(option.value,option.name) for option in  ProductStatus] 
             }
 
-            return jsonify(result),200
+            #Pre-populate form
+            form = ProductForm(data = result) 
+
+            form_fields = []
+            for field in form:
+                form_fields.append({
+                    'label': field.label.text,
+                    'type': field.widget.input_type,
+                    'name': field.name,
+                    'required': field.flags.required,
+                    'value': field.data  # Include the prepopulated value
+                })
+            return jsonify(form_fields),200 
+
         else:
             return jsonify({'result':'No products by that identifier'}),404
 
@@ -264,8 +336,10 @@ def order_details(orderID):
     if request.method == 'POST':
         #---------The implementation of Stripe here --------
         pass
+    
+    #if Request is GET
     if order is not None:
-   
+
         items = LineItems.query.filter_by(order_id = order.id)
         customer =  Users.query.filter_buy(id = order.user_id)
         itemList = []
@@ -285,6 +359,7 @@ def order_details(orderID):
         'status':order.get_status(),
         'items':itemList
         }
+        
         return jsonify({'result':orderDetails}),200
     else:
         return jsonify({"result": "No orders available"}),204
@@ -320,3 +395,21 @@ def add_header(response):
     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
     response.headers['Cache-Control'] = 'public, max-age=0'
     return response
+
+
+def form_errors(form):
+    error_messages = []
+    """Collects form errors"""
+    for field, errors in form.errors.items():
+        for error in errors:
+            message = u"Error in the %s field - %s" % (
+                    getattr(form, field).label.text,
+                    error
+                )
+            error_messages.append(message)
+
+    return error_messages
+
+@login_manager.user_loader
+def load_user(id):
+    return Users.query.get(int(id))

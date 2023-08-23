@@ -13,11 +13,13 @@ app = Flask(__name__)
 app.config.from_object(Config)
 CORS(app)  # Enable CORS for the entire app
 
-with app.app_context():
-    # Initialize SQLAlchemy
-    db = SQLAlchemy(app)
-    migrate = Migrate(app,db)
+from flask_wtf.csrf import CSRFProtect, validate_csrf
 
+csrf = CSRFProtect(app)
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
+migrate = Migrate(app,db)
 
 # Flask-Login login manager
 login_manager = LoginManager()

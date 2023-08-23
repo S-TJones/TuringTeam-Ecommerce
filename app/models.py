@@ -3,7 +3,7 @@ from datetime import datetime
 from flask_login import UserMixin
 # from app.extensions import db
 from . import db
-from werkzeug.security import generate_password_hash
+
 
 # User Class
 class Users(UserMixin, db.Model):
@@ -13,11 +13,11 @@ class Users(UserMixin, db.Model):
     # to `user_profiles` (plural) or some other name.
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer,unique=True)
+    id = db.Column(db.Integer,autoincrement=True,primary_key=True)
     # Instead of full name, first and last
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))
-    email = db.Column(db.String(128),primary_key=True)
+    email = db.Column(db.String(128),unique=True)
     password = db.Column(db.String(255))
     role = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -27,7 +27,7 @@ class Users(UserMixin, db.Model):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
-        self.password = generate_password_hash(password, method='pbkdf2:sha256')
+        self.password = password
         self.role = role
 
     def is_authenticated(self):
@@ -53,14 +53,14 @@ class Users(UserMixin, db.Model):
 # See https://docs.python.org/3/library/functions.html#enumerate
 class ProductStatus(enum.Enum):
     # Status (e.g. pending, published)
-    pending = 'Pending'
-    published = 'Published'
+    pending = 'pending'
+    published = 'published'
 
 # Product Class
 class Product(db.Model):
     __tablename__ = 'products'
     
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     name = db.Column(db.String(80), nullable = False)
     description = db.Column(db.String(2048))
     price = db.Column(db.Numeric(8,2), nullable = False)
@@ -98,7 +98,7 @@ class OrderStatus(enum.Enum):
 class Order(db.Model):
     __tablename__ = 'orders'
 
-    id = db.Column(db.Integer,primary_key =True)
+    id = db.Column(db.Integer,primary_key =True,autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     billing_address = db.Column(db.String(256))
     total_amount = db.Column(db.Numeric(8,2),nullable  = False)
@@ -125,7 +125,7 @@ class Order(db.Model):
 class LineItems(db.Model):
     __tablename__ = 'line_items'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Numeric, nullable =False)
@@ -133,6 +133,22 @@ class LineItems(db.Model):
     def __init__(self, id, order_id, product_id, quantity):
         self.id = id
         self.order_id = order_id
+        self.product_id = product_id
+        self.quantity = quantity
+
+    def __repr__(self):
+        return f"<id: {self.id}, user_id: {self.user_id}>"
+
+class ShoppingCart(db.Model):
+    __tablename__='shopping_cart'
+
+    id= db.Column(db.Integer, primary_key=True,autoincrement=True)
+    user_id=db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False)
+    product_id=db.Column(db.Integer,db.ForeignKey('products.id'),nullable= False)
+    quantity = db.Column(db.Numeric,nullable =False)
+
+    def __init__(self,user_id,product_id,quantity):
+        self.user_id = user_id
         self.product_id = product_id
         self.quantity = quantity
 
