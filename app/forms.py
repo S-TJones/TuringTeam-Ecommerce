@@ -30,7 +30,7 @@ class ProductForm(FlaskForm):
     description = TextAreaField('Description', validators=[DataRequired()])
     price= StringField('Price', validators=[InputRequired()])
     image = FileField('Image',validators=[FileRequired(),FileAllowed(['jpg','png','jpeg'],'Select image files only.')])
-    
+    status_options= SelectField('status', validators=[DataRequired()])
 #----------------------------------------------------------------------
 
 class UpdateOrder(FlaskForm):

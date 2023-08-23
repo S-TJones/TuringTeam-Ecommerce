@@ -44,7 +44,7 @@ def login():
     form = LoginForm()
     if request.method == "POST":
         if form.validate():
-            email = form.email.data
+            email = form.email.data.strip().lower()
             password = form.password.data
             
             user = Users.query.filter_by(email = email).first()
@@ -63,9 +63,9 @@ def signUp():
     """Registers Users"""
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
-        firstName  = form.firstName.data
-        lastName = form.lastName.data
-        email = form.email.data
+        firstName  = form.firstName.data.strip().lower()
+        lastName = form.lastName.data.strip().lower()
+        email = form.email.data.strip().lower()
         password = form.password.data
         retypePassword = form.retypePassword.data
 
@@ -81,7 +81,7 @@ def signUp():
                 lastName = lastName,
                 email = email,
                 password = password,
-                role = 'User'
+                role = 'user'
             )
 
             db.session.add(newUser)
