@@ -6,7 +6,7 @@ from . import db
 
 
 # User Class
-class Users(UserMixin,db.Model):
+class Users(UserMixin, db.Model):
     # You can use this to change the table name. The default convention is to use
     # the class name. In this case a class name of UserProfile would create a
     # user_profile (singular) table, but if we specify __tablename__ we can change it
@@ -29,8 +29,6 @@ class Users(UserMixin,db.Model):
         self.email = email
         self.password = password
         self.role = role
-
-
 
     def is_authenticated(self):
         return True
@@ -80,7 +78,6 @@ class Product(db.Model):
         self.image = image
         self.status = status
         self.user_id = user_id
-
     
     # These methods to splice off the unwanted part of the Enum selected
     # They are called on the object in the respective views

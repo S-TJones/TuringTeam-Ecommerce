@@ -129,6 +129,9 @@ env.bak/
 venv.bak/
 app/config.py
 
+# Migrations
+migrations/
+
 # Spyder project settings
 .spyderproject
 .spyproject
