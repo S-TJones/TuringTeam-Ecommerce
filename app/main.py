@@ -14,9 +14,6 @@ from . import db
 from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
 
-
-
-
 main = Blueprint('main', __name__,url_prefix='/api/v1')
 
 @main.route('/products',methods=["GET"])
@@ -35,12 +32,9 @@ def products():
                     "image":product.image
                 })
 
-        return jsonify({'result':productList}),200
-    
+        return jsonify({'result':productList}), 200
     else:
-        return jsonify({"result":"No Products Available"}),200
-
-
+        return jsonify({"result":"No Products Available"}), 200
 
 
 @main.route("/login", methods=["POST",'GET'])
@@ -48,7 +42,7 @@ def login():
     """Visitor uses this to Authorise and Authenticate themselves"""
 
     if current_user is not None and current_user.is_authenticated:
-        return jsonify({"result":"Successful Login",'user_id':current_user.get_id()}),200
+        return jsonify({"result":"Successful Login",'user_id':current_user.get_id()}), 200
     form = LoginForm()
 
     if request.method == "POST":
@@ -58,14 +52,11 @@ def login():
             
             user = Users.query.filter_by(email = email).first()
        
-
             if user is not None and check_password_hash(user.password,password):
-
                 login_user(user)
-                return jsonify({"result":"Successful Login",'user_id':user.id}),200
-
+                return jsonify({"result":"Successful Login",'user_id':user.id}), 200
             else:
-                return jsonify({"result":"Login unsuccessful. Check credentials"}),401
+                return jsonify({"result":"Login unsuccessful. Check credentials"}), 401
     else:
         form_fields = []
         for field in form:
@@ -83,8 +74,10 @@ def login():
 def signUp():
     """Registers Users"""
     form = RegistrationForm()
-    if request.method == 'POST': 
+
+    if request.method == 'POST':
         if form.validate_on_submit():
+            # print(form.errors)
             firstName  = form.firstName.data.strip().lower()
             lastName = form.lastName.data.strip().lower()
             email = form.email.data.strip().lower()
@@ -92,14 +85,11 @@ def signUp():
             retypePassword = form.retypePassword.data.strip()
 
             if password != retypePassword:
-                return jsonify({'result':"passwords do not match"}),400
+                return jsonify({'result':"passwords do not match"}), 400
 
             if db.session.query(Users.id).filter(Users.email==email).first() is not None:
-                return jsonify({"result": "User already has an account"}),400
-            
-            
+                return jsonify({"result": "User already has an account"}), 400
             else:
-             
                 newUser = Users(
                     first_name = firstName,
                     last_name = lastName,
@@ -111,17 +101,15 @@ def signUp():
                 try:
                     db.session.add(newUser)
                     db.session.commit()
-                    return jsonify({"result":"Successfully Registered"}),201
+                    return jsonify({"result":"Successfully Registered"}), 201
                 except Exception as e:
                     db.session.rollback()
-                    return jsonify({"error":e}),500
+                    return jsonify({"error":e}), 500
         else:
-            error={
-                    "error": form_errors(form)
-                }
-            return jsonify(error),400
-            
-    if request.method == 'GET': 
+            error={"error": form_errors(form)}
+            return jsonify(error), 400
+        
+    if request.method == 'GET':
         form_fields = []
         for field in form:
             form_fields.append({
@@ -131,16 +119,14 @@ def signUp():
                 'required': field.flags.required,
             })
         csrf_token = generate_csrf()
-        response = jsonify(form_fields)
-        response.headers['X-CSRF-Token'] = csrf_token
-        return response
+        return jsonify({"token":csrf_token}), 200
+
 
 @main.route('/logout',methods=['GET'])
 def logout():
     """Logout of the application"""
     logout_user()
-    return jsonify({"result": "Logged out seccessfully"}),200
-
+    return jsonify({"result": "Logged out seccessfully"}), 200
 
 
 # Here we define a function to collect form errors
@@ -159,7 +145,6 @@ def form_errors(form):
     return error_messages
 
 
-
 @main.errorhandler(404)
 def page_not_found(error):
     """Custom 404 page."""
@@ -173,13 +158,18 @@ def add_header(response):
     """
     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
     response.headers['Cache-Control'] = 'public, max-age=0'
+    
+    response.headers['Access-Control-Allow-Origin'] = '*' #'http://localhost:8100'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+
     return response
 
 
 @login_manager.user_loader
 def load_user(id):
     return Users.query.get(int(id))
-
 
 
 def form_errors(form):

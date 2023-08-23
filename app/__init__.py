@@ -11,7 +11,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app)  # Enable CORS for the entire app
+# CORS(app)  # Enable CORS for the entire app
 
 from flask_wtf.csrf import CSRFProtect, validate_csrf
 
@@ -38,7 +38,6 @@ app.register_blueprint(api)
 app.register_blueprint(main)
 app.register_blueprint(admin)
 app.register_blueprint(customer)
-
 
 #------The create all should only be executed ONCE---------- 
 #running db.create_all() again, it will wipe all your data.

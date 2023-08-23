@@ -13,7 +13,7 @@ class Users(UserMixin, db.Model):
     # to `user_profiles` (plural) or some other name.
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer,autoincrement=True,primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     # Instead of full name, first and last
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))

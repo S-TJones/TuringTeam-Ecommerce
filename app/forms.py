@@ -9,7 +9,7 @@ class RegistrationForm(FlaskForm):
     lastName = StringField('Last Name', validators=[InputRequired()])
     email = StringField('Email', validators=[InputRequired()])
     password = StringField('Password', validators=[InputRequired()])
-    confirmPassword = StringField('Re-enter Password', validators=[InputRequired()])
+    retypePassword = StringField('Re-enter Password', validators=[InputRequired()])
 
 #----------------------------------------------------------------------
 
