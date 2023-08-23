@@ -132,6 +132,9 @@ app/config.py
 # Migrations
 migrations/
 
+# Migrations
+migrations/
+
 # Spyder project settings
 .spyderproject
 .spyproject
