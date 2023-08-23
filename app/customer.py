@@ -1,8 +1,12 @@
 from flask import Blueprint, jsonify, current_app, request, session
-from flask_login import current_user, login_required
+from flask_login import LoginManager, current_user, login_required
 from sqlalchemy import and_
-from app.extensions import db
-from app.models import LineItems, Order, Product, Users
+from app import login_manager
+# from app.extensions import db
+from . import db
+
+from datetime import datetime
+from app.models import LineItems, Order, Product, ShoppingCart, Users
 
 
 customer = Blueprint('customer', __name__, url_prefix='/api/v1/customer')
@@ -71,12 +75,13 @@ def order_details(orderID):
 def view_cart():
     #load All line items for the customer
     cartList =[]
-    cartItems  = ShoppingCart.query.filter(ShoppingCart.customer_id == current_user.get_id()).all()
+    cartItems  = ShoppingCart.query.filter(ShoppingCart.user_id == current_user.get_id()).all()
     
     if len(cartItems) !=0:
         for item in cartItems:
             cartList.append(
                 {
+                    'item_id': item.id,
                     'product_name': Product.query.filter(Product.id == item.product_id).first().name,
                     'price': Product.query.filter(Product.id == item.product_id).first().price,
                     'quantity': item.quantity
@@ -117,3 +122,21 @@ def add_header(response):
     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
     response.headers['Cache-Control'] = 'public, max-age=0'
     return response
+
+
+def form_errors(form):
+    error_messages = []
+    """Collects form errors"""
+    for field, errors in form.errors.items():
+        for error in errors:
+            message = u"Error in the %s field - %s" % (
+                    getattr(form, field).label.text,
+                    error
+                )
+            error_messages.append(message)
+
+    return error_messages
+
+@login_manager.user_loader
+def load_user(id):
+    return Users.query.get(int(id))
