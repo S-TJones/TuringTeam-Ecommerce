@@ -1,8 +1,8 @@
 import os
 from flask import Blueprint, Config, jsonify, current_app, redirect, request, session, url_for
 from flask_login import login_required,current_user
-from app.forms import ProductForm, RegistrationForm, UserUpdate
-from app.models import Order, ProductStatus, Users,Product
+from app.forms import ProductForm, RegistrationForm, UpdateOrder, UserUpdate
+from app.models import LineItems, Order, ProductStatus, Users,Product
 from app.extensions import db
 from werkzeug.utils import secure_filename
 
@@ -121,7 +121,7 @@ def createProduct():
     form.status_options.choices = [(option.value,option.name) for option in ProductStatus]
     
     if request.method =='POST' and form.validate_on_submit():
-        name = form.name.data.strip().lower()
+        name = form.name.data.strip()
         description = form.description.data.strip().lower()
         price = form.price.data.strip().lower()
         image = form.image.data.strip().lower()
@@ -227,26 +227,77 @@ def deleteProduct(productID):
 @login_required
 def viewOrders():
     adminOnly()
+
     orders = Order.query.all()
     orderList = []
     if len(orders) != 0:
         for order in orders:
-            result = {
-                
-            }
+            items = LineItems.query.filter_by(order_id = order.id).all()
+            itemList = []
+            for item in items:
+                itemList.append({
+                    'product_name': Product.query.filter_by(id = item.product_id).first().name,
+                    'quantity': item.quantity
+                })
+            orderList.append(
+                {
+                    "id": order.id,
+                    'address':order.billing_address,
+                    'total':order.total_amount,
+                    'status':order.status,
+                    'items':itemList
+                }
+            )
+        return jsonify({'result':orderList}),200
+    else:
+         return jsonify({"result": "No orders available"}),204
 
 
-@admin.route('/orders/<orderID>', methods=['GET'])
+@admin.route('/orders/<orderID>', methods=['GET','POST'])
 @login_required
 def order_details(orderID):
     adminOnly()
-    pass
+
+    order = Order.query.get(orderID) 
+    form = UpdateOrder(status_options = order.status.value) # pre-selects the status for the drop down option
+    
+    if request.method == 'POST':
+        #---------The implementation of Stripe here --------
+        pass
+    if order is not None:
+   
+        items = LineItems.query.filter_by(order_id = order.id)
+        customer =  Users.query.filter_buy(id = order.user_id)
+        itemList = []
+        for item in items:
+            itemList.append({
+                'product_name': Product.query.filter_by(id = item.product_id).first().name,
+                'quantity': item.quantity
+            })
+
+
+        orderDetails = {
+        "id": order.id,
+        "customer_name": f"{customer.first_name} {customer.last_name}".title(),
+        "customer_email": f'{customer.email}',
+        'billing_address': order.billing_address,
+        'total_amount': order.total_amount,
+        'status':order.get_status(),
+        'items':itemList
+        }
+        return jsonify({'result':orderDetails}),200
+    else:
+        return jsonify({"result": "No orders available"}),204
 
 @admin.route('/orders/<orderID>', methods=['GET','POST'])
 @login_required
 def edit_order(orderID):
     adminOnly()
-    pass
+
+
+
+
+
 
 
 
@@ -258,3 +309,14 @@ def adminOnly():
         return jsonify({
             "error":"Unauthorised Access, Administrator role required"
         }),401
+    
+
+@admin.after_request
+def add_header(response):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
+    response.headers['Cache-Control'] = 'public, max-age=0'
+    return response
