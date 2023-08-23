@@ -6,7 +6,7 @@ from . import db
 from werkzeug.security import generate_password_hash
 
 # User Class
-class Users(UserMixin,db.Model):
+class Users(UserMixin, db.Model):
     # You can use this to change the table name. The default convention is to use
     # the class name. In this case a class name of UserProfile would create a
     # user_profile (singular) table, but if we specify __tablename__ we can change it
@@ -23,14 +23,12 @@ class Users(UserMixin,db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def __init__(self, first_name, last_name, email,password, role, created_at, updated_at):
+    def __init__(self, first_name, last_name, email,password, role):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
         self.password = generate_password_hash(password, method='pbkdf2:sha256')
         self.role = role
-        self.created_at = created_at
-        self.updated_at = updated_at
 
     def is_authenticated(self):
         return True
@@ -72,7 +70,7 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    def __init__(self, name, description, price, image, status, user_id, created_at, updated_at):
+    def __init__(self, name, description, price, image, status, user_id):
         super().__init__()
         self.name = name
         self.description = description
@@ -80,8 +78,6 @@ class Product(db.Model):
         self.image = image
         self.status = status
         self.user_id = user_id
-        self.created_at = created_at
-        self.updated_at = updated_at
     
     # These methods to splice off the unwanted part of the Enum selected
     # They are called on the object in the respective views
@@ -110,14 +106,12 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def __init__(self, id, user_id, billing_address, total_amount, status, created_at, updated_at):
+    def __init__(self, id, user_id, billing_address, total_amount, status):
         self.id = id
         self.user_id = user_id
         self.billing_address = billing_address
         self.total_amount = total_amount
         self.status = status
-        self.created_at = created_at
-        self.updated_at = updated_at
 
     def __repr__(self):
         return f"< Order Id: {self.id}, Status: {self.status}>"
