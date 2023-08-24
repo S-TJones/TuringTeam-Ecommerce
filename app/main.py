@@ -10,6 +10,7 @@ from app import login_manager
 from pprint import pprint
 # from app.extensions import db
 from . import db
+import os
 
 from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
@@ -125,9 +126,10 @@ def signUp():
                     return jsonify({"error":e}), 500
         else:
             error={"error": form_errors(form)}
-            return jsonify(error), 400
-        
-    if request.method == 'GET':
+            return jsonify(error),400
+            
+    if request.method == 'GET': 
+        print(os.getcwd())
         form_fields = []
         for field in form:
             form_fields.append({
