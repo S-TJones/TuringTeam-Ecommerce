@@ -319,7 +319,7 @@ def viewOrders():
                     "id": order.id,
                     'address':order.billing_address,
                     'total':order.total_amount,
-                    'status':order.status,
+                    'status':order.get_status(),
                     'items':itemList
                 }
             )
@@ -333,44 +333,39 @@ def viewOrders():
 def order_details(orderID):
     adminOnly()
 
-    order = Order.query.get(orderID) 
+    order = Order.query.filter(Order.id == orderID).first()
     form = UpdateOrder(status_options = order.status.value) # pre-selects the status for the drop down option
     
     if request.method == 'POST':
         #---------The implementation of Stripe here --------
         pass
     
-    #if Request is GET
-    if order is not None:
+    if request.method == 'GET':
+        if order is not None:
 
-        items = LineItems.query.filter_by(order_id = order.id)
-        customer =  Users.query.filter_buy(id = order.user_id)
-        itemList = []
-        for item in items:
-            itemList.append({
-                'product_name': Product.query.filter_by(id = item.product_id).first().name,
-                'quantity': item.quantity
-            })
+            items = LineItems.query.filter_by(order_id = order.id)
+            customer =  Users.query.filter_by(id = order.user_id).first()
+            itemList = []
+            for item in items:
+                itemList.append({
+                    'product_name': Product.query.filter_by(id = item.product_id).first().name,
+                    'quantity': item.quantity
+                })
 
 
-        orderDetails = {
-        "id": order.id,
-        "customer_name": f"{customer.first_name} {customer.last_name}".title(),
-        "customer_email": f'{customer.email}',
-        'billing_address': order.billing_address,
-        'total_amount': order.total_amount,
-        'status':order.get_status(),
-        'items':itemList
-        }
-        
-        return jsonify({'result':orderDetails}),200
-    else:
-        return jsonify({"result": "No orders available"}),204
-
-@admin.route('/orders/<orderID>', methods=['GET','POST'])
-@login_required
-def edit_order(orderID):
-    adminOnly()
+            orderDetails = {
+            "id": order.id,
+            "customer_name": f"{customer.first_name} {customer.last_name}".title(),
+            "customer_email": f'{customer.email}',
+            'billing_address': order.billing_address,
+            'total_amount': order.total_amount,
+            'status':order.get_status(),
+            'items':itemList
+            }
+            
+            return jsonify({'result':orderDetails}),200
+        else:
+            return jsonify({"result": "No orders available"}),204
 
 
 
