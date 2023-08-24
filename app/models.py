@@ -80,8 +80,8 @@ class Product(db.Model):
         self.user_id = user_id
 
     def get_status(self):
-        color = str(self.status).split('.')
-        return color[1]
+        stat = str(self.status).split('.')
+        return stat[1]
     
     # These methods to splice off the unwanted part of the Enum selected
     # They are called on the object in the respective views
@@ -110,12 +110,15 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def __init__(self, id, user_id, billing_address, total_amount, status):
-        self.id = id
+    def __init__(self,user_id, billing_address, total_amount, status):
         self.user_id = user_id
         self.billing_address = billing_address
         self.total_amount = total_amount
         self.status = status
+    
+    def get_status(self):
+            stat = str(self.status).split('.')
+            return stat[1]
 
     def __repr__(self):
         return f"< Order Id: {self.id}, Status: {self.status}>"
@@ -134,8 +137,7 @@ class LineItems(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Numeric, nullable =False)
 
-    def __init__(self, id, order_id, product_id, quantity):
-        self.id = id
+    def __init__(self,order_id, product_id, quantity):
         self.order_id = order_id
         self.product_id = product_id
         self.quantity = quantity

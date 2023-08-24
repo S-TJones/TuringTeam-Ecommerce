@@ -6,7 +6,7 @@ from app import login_manager
 from . import db
 
 from datetime import datetime
-from app.models import LineItems, Order, Product, ShoppingCart, Users
+from app.models import LineItems, Order, Product, ShoppingCart, Users, OrderStatus
 
 
 customer = Blueprint('customer', __name__, url_prefix='/api/v1/customer')
@@ -18,7 +18,7 @@ def status():
 @customer.route('/orders/', methods=['GET'])
 @login_required
 def viewOrders():
-    orders = Order.query.filter(Order.customer_id == current_user.get_id()).all()
+    orders = Order.query.filter(Order.user_id == current_user.get_id()).all()
     orderList =[]
     if len(orders) !=0:
         for order in orders:
@@ -34,7 +34,7 @@ def viewOrders():
                     "id": order.id,
                     'address':order.billing_address,
                     'total':order.total_amount,
-                    'status':order.status,
+                    'status':order.get_status(),
                     'items':itemList
                 }
             )
@@ -51,23 +51,27 @@ def order_details(orderID):
     if order is not None:
         itemList = []
         items = LineItems.query.filter_by(order_id = order.id)
-        customer =  Users.query.filter_buy(id = current_user.get_id())
+        customer =  Users.query.filter_by(id = current_user.get_id()).first()
         for item in items:
             itemList.append({
                 'product_name': Product.query.filter_by(id = item.product_id).first().name,
+                "price" : Product.query.filter_by(id = item.product_id).first().price,
                 'quantity': item.quantity
             })
 
 
         orderDetails = {
-        "id": order.id,
+        "id": order.id, 
+        'status':order.get_status(),
         "customer_name": f"{customer.first_name} {customer.last_name}".title(),
         "customer_email": f'{customer.email}',
         'billing_address': order.billing_address,
         'total_amount': order.total_amount,
-        'status':order.get_status(),
         'items':itemList
-        }        
+        }
+        return jsonify({'result':orderDetails}),200
+
+    return jsonify({"result": "No orders exist with that ID"}),204        
 
 
 
@@ -151,7 +155,51 @@ def remove_from_cart(cartItemID):
 @login_required
 def checkout():
     #------------IMPLEMENTATION OF STRIPE HERE-------------------
-    pass
+    if request.method == 'POST':
+        
+        address = request.form['billingAddress'].strip()
+        u_id = current_user.get_id()
+        
+        cartItems = ShoppingCart.query.filter(ShoppingCart.user_id == u_id).all()
+        total = 0
+
+        if cartItems is not None:
+            for cartItem in cartItems:
+                price  = Product.query.filter(Product.id == ShoppingCart.product_id).first().price
+                total += cartItem.quantity * price
+            
+            status = OrderStatus('Completed')
+            order = Order(u_id,address,total,status)
+
+            try:
+                db.session.add(order)
+                db.session.commit()
+                placed_order = Order.query.filter(and_(Order.user_id == u_id, Order.billing_address == address,Order.total_amount ==total)).first()
+
+                for cartItem in cartItems:
+                    lineItem = LineItems(placed_order.id,cartItem.product_id,cartItem.quantity)
+                    db.session.add(lineItem)
+                    db.session.commit()
+
+                    # Empty Shopping Cart
+                    for cartItem in cartItems:
+                        db.session.delete(cartItem)
+                        db.session.commit()
+
+                return jsonify({
+                    'result':f'Successfully placed order'
+                    }),200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error":e}),500
+            
+
+            
+        else:
+            return jsonify({'result':"Your cart is Empty"}),200
+
+
+    
 
 @customer.after_request
 def add_header(response):
