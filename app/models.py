@@ -78,6 +78,10 @@ class Product(db.Model):
         self.image = image
         self.status = status
         self.user_id = user_id
+
+    def get_status(self):
+        color = str(self.status).split('.')
+        return color[1]
     
     # These methods to splice off the unwanted part of the Enum selected
     # They are called on the object in the respective views

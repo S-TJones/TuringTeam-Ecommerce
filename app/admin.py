@@ -6,7 +6,7 @@ from app.models import LineItems, Order, ProductStatus, Users,Product
 from app import login_manager, app
 # from app.extensions import db
 from . import db
-
+import os
 
 
 from datetime import datetime
@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 
 
 admin = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
-
+root_path = os.getcwd()
 @admin.route('/status',methods=['GET'])
 @login_required
 def status():
@@ -81,9 +81,11 @@ def view_or_edit_user_details(userID):
     if request.method == 'GET':
         if user is not None:
                 result = {
-                    'firstName': user.firstName,
-                    'lastName' : user.lastName,
-                    'email': user.email
+                    'firstName': user.first_name,
+                    'lastName' : user.last_name,
+                    'email': user.email,
+                    'id':user.id,
+                    'role': user.role 
                 }  
                 #pre-populate the form
                 form = UserUpdate(data = result)
@@ -132,7 +134,7 @@ def delete_user(userID):
 
 @admin.route('/product/', methods=['GET','POST'])
 @login_required
-def createProduct():
+def   createProduct():
     adminOnly()
 
     form = ProductForm()
@@ -141,30 +143,31 @@ def createProduct():
     if request.method =='POST':
         if form.validate_on_submit():
             name = form.name.data.strip()
-            description = form.description.data.strip().lower()
+            description = form.description.data.strip()
             price = form.price.data.strip()
             image = form.image.data
             status = form.status_options.data
 
-            print(name)
 
             if image.filename == '':
                 return jsonify({'error':'file name required'}),422
 
             imageName = secure_filename(image.filename.rstrip())
 
-            print(imageName)
-            config = Config()
+            # print(f'TIS IS THE OS PATH: {root_path}')
+            # print(f'IMAGE NAME: {imageName}')
+            upload_path = root_path+app.config['UPLOAD_FOLDER']
 
-            # image.save(os.path.join(root_path,config['UPLOAD_FOLDER'], imageName))
-            image.save(str(os.path.join(app.config.UPLOAD_FOLDER,imageName)))
+            image.save(upload_path +  imageName)
+            # image.save(str(os.path.join(app.config.UPLOAD_FOLDER,imageName)))
 
             new_product = Product(
                 name,
                 description,
                 price,
                 imageName,
-                ProductStatus(str(status))
+                ProductStatus(str(status)),
+                current_user.get_id()
             )
             print("prod created")
             try:
@@ -209,7 +212,7 @@ def updateProductDetails(productID):
 
     if request.method == "POST" and form.validate_on_submit():
         name= form.name.data.strip()
-        description= form.description.data.strip().lower()
+        description= form.description.data.strip()
         price= form.price.data.strip()
         image= form.image.data.strip().lower()
         status_options = form.status_options.data

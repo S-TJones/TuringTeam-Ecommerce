@@ -10,6 +10,7 @@ from app import login_manager
 from pprint import pprint
 # from app.extensions import db
 from . import db
+import os
 
 from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
@@ -25,7 +26,8 @@ def products():
     products = Product.query.all()
     if len(products) !=0:
         for product in products:
-            if product.status == 'Published':
+            print(product.get_status())
+            if product.get_status() == 'published':
                 productList.append({
                     "id":product.id,
                     "name":product.name,
@@ -122,6 +124,7 @@ def signUp():
             return jsonify(error),400
             
     if request.method == 'GET': 
+        print(os.getcwd())
         form_fields = []
         for field in form:
             form_fields.append({

@@ -1,6 +1,6 @@
 # from itertools import product
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField,TextAreaField, SelectField
+from wtforms import StringField, PasswordField,TextAreaField, SelectField,IntegerField
 from wtforms.validators import InputRequired, DataRequired
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
@@ -14,6 +14,7 @@ class RegistrationForm(FlaskForm):
 #----------------------------------------------------------------------
 
 class UserUpdate(FlaskForm):
+    id = IntegerField('id',validators=[InputRequired()])
     firstName = StringField('First Name', validators=[InputRequired()])
     lastName = StringField('Last Name', validators=[InputRequired()])
     email = StringField('Email', validators=[InputRequired()])
