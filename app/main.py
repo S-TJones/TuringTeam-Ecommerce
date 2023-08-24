@@ -5,7 +5,7 @@ from flask_login import login_user, logout_user, current_user
 from flask_wtf.csrf import generate_csrf
 from datetime import datetime
 from app.forms import LoginForm,RegistrationForm
-from app.models import Users,Product
+from app.models import ProductStatus, Users,Product
 from app import login_manager
 from pprint import pprint
 # from app.extensions import db
@@ -16,26 +16,45 @@ from werkzeug.security import generate_password_hash
 
 main = Blueprint('main', __name__,url_prefix='/api/v1')
 
-@main.route('/products',methods=["GET"])
+@main.route('/products', methods=["GET"])
 def products():
     productList = []
-    products = Product.query.all()
+    products = Product.query.filter_by(status=ProductStatus.published).all()
     if len(products) !=0:
         for product in products:
-            if product.status == 'Published':
-                productList.append({
-                    "id":product.id,
-                    "name":product.name,
-                    "description":product.description,
-                    "price":product.price,
-                    "price":product.price,
-                    "image":product.image
-                })
+            print(product)
+            productList.append({
+                "id":product.id,
+                "name":product.name,
+                "description":product.description,
+                "price":product.price,
+                "image":product.image
+            })
 
         return jsonify({'result':productList}), 200
     else:
-        return jsonify({"result":"No Products Available"}), 200
+        return jsonify({"result":"No Products Available"}), 200\
 
+
+@main.route('/products/<int:product_id>', methods=['GET'])
+def get_product_by_id(product_id):
+    # Query the database to get the product by ID
+    product = Product.query.get(product_id)
+
+    if not product:
+        return jsonify({'message': 'Product not found'}), 404
+
+    # Convert the product to a dictionary and return it as JSON
+    product_data = {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "status": product.status.value,  # Get the Enum value as a string
+        "price":product.price,
+        "image":product.image
+    }
+
+    return jsonify(product_data), 200
 
 @main.route("/login", methods=["POST",'GET'])
 def login():
@@ -66,9 +85,8 @@ def login():
                 'name': field.name,
                 'required': field.flags.required,
             })
-        response = jsonify(form_fields)
-        response.headers['X-CSRF-Token'] = generate_csrf()
-        return response
+        csrf_token = generate_csrf()
+        return jsonify({"token":csrf_token}), 200
             
 @main.route('/sign-up',methods=['GET','POST'])
 def signUp():

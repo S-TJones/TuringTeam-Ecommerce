@@ -82,7 +82,7 @@ class Product(db.Model):
     # These methods to splice off the unwanted part of the Enum selected
     # They are called on the object in the respective views
     def __repr__(self):
-        return f"<{self.id},{self.title},{self.type},{self.price}>"
+        return f"<{self.id},{self.name}, UserID:{self.user_id},{self.price} | {self.status}>"
 
 #----------------------------------------------------------------------
 #Note The class below is not a DB model, but Enumerate. Note parameter of the class definition.
